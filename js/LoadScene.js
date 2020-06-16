@@ -74,7 +74,7 @@ export default class LoadScene extends Phaser.Scene {
 
     // TILEMAP
 
-    // this.load.tilemapTiledJSON("world-1-1", "./assets/tilemap/world1-1.json");
+    this.load.tilemapTiledJSON("level1", "./assets/tilemap/level1.json");
     this.load.tilemapTiledJSON("menu", "./assets/tilemap/menu.json");
 
     // TILESET  
