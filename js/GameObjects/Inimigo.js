@@ -12,11 +12,15 @@ export default class Inimigo extends Phaser.Physics.Arcade.Sprite{
       y: 300
     }
 
+    this.inSight = false;
     this.direcao = -1; // -1 Para a Esquerda, 1 Para a Direita
   }
 
   update(){
-    this.movimentacaoDoInimigo()
+    if(this.x - this.scene.jogador.x < 140 && this.scene.jogador.x < this.x && !this.inSight || this.scene.jogador.x - this.x < 140 && this.scene.jogador.x > this.x && !this.inSight){
+      this.inSight = true;
+      this.movimentacaoDoInimigo()
+    }
   }
 
   movimentacaoDoInimigo(){

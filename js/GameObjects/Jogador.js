@@ -1,5 +1,5 @@
 export default class Jogador extends Phaser.Physics.Arcade.Sprite{
-  constructor(scene, x, y, textura){
+  constructor(scene, x, y, textura, jogador, tamanho, stance){
     super(scene, x, y, textura);
 
     scene.add.existing(this);
@@ -11,30 +11,57 @@ export default class Jogador extends Phaser.Physics.Arcade.Sprite{
     this.canJump = true;
     this.velocidade = {
       x: 100,
-      y: 300
+      y: 400
+    }
+
+    this.state = {
+      jogador: jogador,
+      tamanho: tamanho,
+      stance: stance,
     }
   }
 
   update(cursor){
-    this.movimentacaoDoJogador(cursor)
+    this.movimentacaoDoJogador(cursor);
+    this.animacaoDoJogador();
   }
 
   movimentacaoDoJogador(cursor){
-    this.setVelocityX(0)
-    if(cursor.right.isDown){
-      this.setVelocityX(this.velocidade.x)
-    }
-    else if(cursor.left.isDown){
-      this.setVelocityX(-this.velocidade.x)
+    this.setVelocityX(0);
+
+    if(this.body.velocity.x === 0 && this.body.velocity.y === 0 && (this.body.onFloor() || this.body.touching.down)){
+      this.state.stance = "Idle"
     }
 
-    if(cursor.up.isDown && this.canJump && this.body.onFloor()){
+    if(cursor.right.isDown){
+      this.flipX = false;
+      this.setVelocityX(this.velocidade.x)
+      if(this.body.onFloor()){
+        this.state.stance = "Walking";
+      }
+    }
+    else if(cursor.left.isDown){
+      this.flipX = true;
+      this.setVelocityX(-this.velocidade.x);
+      if(this.body.onFloor()){
+        this.state.stance = "Walking";
+      }
+    }
+
+    if(cursor.up.isDown && this.canJump && (this.body.onFloor() || this.body.touching.down)){
       this.setVelocityY(-this.velocidade.y);
+      this.state.stance = "Jump";
       this.canJump = false;
     }
 
     if(cursor.up.isUp){
       this.canJump = true;
     }
+  }
+
+  animacaoDoJogador(){
+    const {jogador, tamanho, stance} = this.state;
+    // console.log(`${jogador} ${tamanho} ${stance}`);
+    this.anims.play(`${jogador} ${tamanho} ${stance}`, true);
   }
 }
