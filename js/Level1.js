@@ -60,7 +60,7 @@ export default class BootScene extends Phaser.Scene{
 
     // Blocos Interativos
     this.blocosInterativos = this.add.group();
-    this.tijolos = this.add.group()
+    this.tijolos = this.add.group();
 
     this.world.forEachTile(tile =>{
       if(tile.index === 2){
@@ -81,15 +81,57 @@ export default class BootScene extends Phaser.Scene{
         let blocoSurpresa = this.physics.add.sprite(x, y, "surpriseBlock") ;
         blocoSurpresa.anims.play("Surprise Block Ativo");
         blocoSurpresa.setImmovable()
+        blocoSurpresa.canDrop = true;
 
         this.blocosInterativos.add(blocoSurpresa);
         this.world.removeTileAt(tile.x, tile.y)
       }
     })
 
+    this.itemsColetaveis = this.add.group();
+
     // Camera
     this.cameras.main.startFollow(this.jogador, true)
     this.cameras.main.setBounds(0, 0, 3584, 240);
+
+    // HUD
+    this.pontuacao = 0;
+    this.moedasColetadas = 0;
+    this.tempo = 250;
+
+    // TODO: NOME DO JOGADOR DINAMICO
+    this.txtJogador = this.add.text(25, 10, `MARIO`, {fontSize: "12px"});
+    this.txtJogador.setOrigin(0.5);
+    this.txtJogador.setScrollFactor(0);
+
+    this.txtPontuacao = this.add.text(25, 25, `${this.pontuacao}`, {fontSize: "12px"});
+    this.txtPontuacao.setOrigin(0.5);
+    this.txtPontuacao.setScrollFactor(0);
+
+    this.moedaPiscando = this.add.sprite(80, 25, "coin");
+    this.moedaPiscando.anims.play("Coin 1");
+    this.moedaPiscando.setScale(0.7);
+    this.moedaPiscando.setScrollFactor(0);
+
+    this.txtMoedasColetadas = this.add.text(98, 25, `x${this.moedasColetadas}`, {fontSize: "12px"});
+    this.txtMoedasColetadas.setOrigin(0.5);
+    this.txtMoedasColetadas.setScrollFactor(0);
+
+    this.txtMoedasColetadas = this.add.text(160, 10, "Mundo");
+    this.txtMoedasColetadas.setOrigin(0.5);
+    this.txtMoedasColetadas.setScrollFactor(0);
+
+    this.txtMoedasColetadas = this.add.text(160, 25, `1-1`, {fontSize: "12px"});
+    this.txtMoedasColetadas.setOrigin(0.5);
+    this.txtMoedasColetadas.setScrollFactor(0);
+
+    this.txtMoedasColetadas = this.add.text(220, 10, `Tempo`, {fontSize: "12px"});
+    this.txtMoedasColetadas.setOrigin(0.5);
+    this.txtMoedasColetadas.setScrollFactor(0);
+
+    this.txtMoedasColetadas = this.add.text(220, 25, `${this.tempo}`, {fontSize: "12px"});
+    this.txtMoedasColetadas.setOrigin(0.5);
+    this.txtMoedasColetadas.setScrollFactor(0);
 
     // Fisicas
     this.physics.add.collider(this.jogador, this.world);
@@ -97,9 +139,13 @@ export default class BootScene extends Phaser.Scene{
     this.physics.add.collider(this.jogador, this.blocosInterativos, this.colisaoComBlocosInterativos, null, this);
     this.physics.add.collider(this.jogador, this.tijolos);
 
-
     this.physics.add.collider(this.inimigos, this.world);
     this.physics.add.collider(this.inimigos, this.blocosInterativos);
+    this.physics.add.collider(this.inimigos, this.tijolos);
+
+    this.physics.add.collider(this.itemsColetaveis, this.world);
+    this.physics.add.collider(this.itemsColetaveis, this.blocosInterativos);
+    this.physics.add.collider(this.itemsColetaveis, this.tijolos);
   }
 
   update(){
@@ -122,9 +168,45 @@ export default class BootScene extends Phaser.Scene{
   }
 
   colisaoComBlocosInterativos(jogador, bloco){
-    console.log("FOI")
-    if(jogador.y - jogador.body.halfHeight <= bloco.y + bloco.body.halfHeight){
-      console.log("Spawnou um item")
+    if(jogador.y - jogador.body.halfHeight >= bloco.y + bloco.body.halfHeight){
+      if (!bloco.canDrop) return
+      bloco.canDrop = false;
+      bloco.anims.play("Surprise Block Inativo");
+      this.tweens.add({
+        targets: bloco,
+        y: bloco.y - bloco.body.halfHeight,
+        ease: "Circ",
+        duration: 100,
+        repeat: 0,
+        yoyo: true
+      })
+
+      let sorteio = Math.round(Math.random() * 100)
+
+      if(sorteio <= 90){
+        let moeda = this.add.sprite(bloco.x, bloco.y - bloco.body.height, "coin");
+        let animMoeda = this.tweens.add({
+          targets: moeda,
+          y: moeda.y - bloco.body.height,
+          ease: "Circ",
+          duration: 200,
+          repeat: 0,
+          yoyo: true
+        })
+        animMoeda.on('complete', function(tween, targets){
+          this.pontuacao += 200;
+          this.txtPontuacao.setText(`${this.pontuacao}`)
+
+          this.moedasColetadas ++;
+          this.txtMoedasColetadas.setText(`x${this.moedasColetadas}`)
+          moeda.destroy();
+        }, this);
+      } else{
+        let cogumeloMagico = this.physics.add.sprite(bloco.x, bloco.y - bloco.body.height, "magicMushroom");
+        cogumeloMagico.setVelocityY(-200);
+        cogumeloMagico.setGravity(0, 1000);
+        this.itemsColetaveis.add(cogumeloMagico);
+      }
     }
   }
 }

@@ -36,14 +36,14 @@ export default class Jogador extends Phaser.Physics.Arcade.Sprite{
     if(cursor.right.isDown){
       this.flipX = false;
       this.setVelocityX(this.velocidade.x)
-      if(this.body.onFloor()){
+      if(this.body.onFloor() || this.body.touching.down){
         this.state.stance = "Walking";
       }
     }
     else if(cursor.left.isDown){
       this.flipX = true;
       this.setVelocityX(-this.velocidade.x);
-      if(this.body.onFloor()){
+      if(this.body.onFloor() || this.body.touching.down){
         this.state.stance = "Walking";
       }
     }
