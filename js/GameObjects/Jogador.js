@@ -15,9 +15,9 @@ export default class Jogador extends Phaser.Physics.Arcade.Sprite{
     }
 
     this.state = {
-      jogador: jogador,
-      tamanho: tamanho,
-      stance: stance,
+      jogador,
+      tamanho,
+      stance,
     }
   }
 
@@ -63,5 +63,6 @@ export default class Jogador extends Phaser.Physics.Arcade.Sprite{
     const {jogador, tamanho, stance} = this.state;
     // console.log(`${jogador} ${tamanho} ${stance}`);
     this.anims.play(`${jogador} ${tamanho} ${stance}`, true);
+    this.body.setSize();
   }
 }

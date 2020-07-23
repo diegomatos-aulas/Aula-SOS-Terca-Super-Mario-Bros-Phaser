@@ -25,8 +25,23 @@ export default class BootScene extends Phaser.Scene{
     this.world = this.map.createDynamicLayer("world", this.tileset);
     this.world.setCollisionByProperty({collide:true})
 
+    // Musicas e Sons
+    this.powerUpSFX = this.sound.add("powerUpSFX", {
+      volume: 0.3
+    })
+
+    this.bumpSFX = this.sound.add("bumpSFX", {
+      volume: 0.3
+    })
+
+    this.backgroundMusica = this.sound.add("backgroundMusic", {
+      volume: 0.1,
+      loop: true
+    })
+    this.backgroundMusica.play();
+
     // Jogador
-    this.jogador = new Jogador(this, 48, this.GAME_HEIGHT-40, "Mario Pequeno", "Mario", "Pequeno", "Idle");
+    this.jogador = new Jogador(this, 46, this.GAME_HEIGHT-40, "Mario Pequeno", "Mario", "Pequeno", "Idle");
 
     this.cursor = this.input.keyboard.createCursorKeys()
 
@@ -117,27 +132,28 @@ export default class BootScene extends Phaser.Scene{
     this.txtMoedasColetadas.setOrigin(0.5);
     this.txtMoedasColetadas.setScrollFactor(0);
 
-    this.txtMoedasColetadas = this.add.text(160, 10, "Mundo");
-    this.txtMoedasColetadas.setOrigin(0.5);
-    this.txtMoedasColetadas.setScrollFactor(0);
+    this.txtMundo = this.add.text(160, 10, "Mundo");
+    this.txtMundo.setOrigin(0.5);
+    this.txtMundo.setScrollFactor(0);
 
-    this.txtMoedasColetadas = this.add.text(160, 25, `1-1`, {fontSize: "12px"});
-    this.txtMoedasColetadas.setOrigin(0.5);
-    this.txtMoedasColetadas.setScrollFactor(0);
+    this.txtLevel = this.add.text(160, 25, `1-1`, {fontSize: "12px"});
+    this.txtLevel.setOrigin(0.5);
+    this.txtLevel.setScrollFactor(0);
 
-    this.txtMoedasColetadas = this.add.text(220, 10, `Tempo`, {fontSize: "12px"});
-    this.txtMoedasColetadas.setOrigin(0.5);
-    this.txtMoedasColetadas.setScrollFactor(0);
+    this.txtTempoHUD = this.add.text(220, 10, `Tempo`, {fontSize: "12px"});
+    this.txtTempoHUD.setOrigin(0.5);
+    this.txtTempoHUD.setScrollFactor(0);
 
-    this.txtMoedasColetadas = this.add.text(220, 25, `${this.tempo}`, {fontSize: "12px"});
-    this.txtMoedasColetadas.setOrigin(0.5);
-    this.txtMoedasColetadas.setScrollFactor(0);
+    this.txtTempo = this.add.text(220, 25, `${this.tempo}`, {fontSize: "12px"});
+    this.txtTempo.setOrigin(0.5);
+    this.txtTempo.setScrollFactor(0);
 
     // Fisicas
     this.physics.add.collider(this.jogador, this.world);
     this.physics.add.overlap(this.jogador, this.inimigos, this.colisaoComOInimigo, null, this);
     this.physics.add.collider(this.jogador, this.blocosInterativos, this.colisaoComBlocosInterativos, null, this);
     this.physics.add.collider(this.jogador, this.tijolos);
+    this.physics.add.overlap(this.jogador, this.itemsColetaveis, this.coletarItem, null, this);
 
     this.physics.add.collider(this.inimigos, this.world);
     this.physics.add.collider(this.inimigos, this.blocosInterativos);
@@ -159,11 +175,42 @@ export default class BootScene extends Phaser.Scene{
   }
 
   colisaoComOInimigo(jogador, inimigo){
+    console.log(inimigo.body.halfHeight)
     if(jogador.y + jogador.body.halfHeight <= inimigo.y - inimigo.body.halfHeight){
+      let novaPontuacao;
+      jogador.setVelocityY(-130);
+      jogador.state.stance = "Jump";
       this.inimigos.remove(inimigo, true, true);
-      console.log("Matou O inimigo")
+      this.bumpSFX.play();
+
+      if(inimigo.nome === "Little Gomba"){
+        novaPontuacao = 200;
+      } else if (inimigo.nome === "Koopa Troopa"){
+        novaPontuacao = 400;
+      }
+
+      this.pontuacao += novaPontuacao;
+      this.txtPontuacao.setText(`${this.pontuacao}`);
+
+      let txtNovaPontuacao = this.add.text(jogador.x, jogador.y - jogador.body.halfHeight, `+${novaPontuacao}`, {fontSize: "8px"});
+      txtNovaPontuacao.setOrigin(0.5, 1);
+
+      this.tweens.add({
+        targets: txtNovaPontuacao,
+        y: txtNovaPontuacao.y - 20,
+        ease: "Circ",
+        duration: 400,
+        repeat: 0,
+        yoyo: false,
+        onComplete: function () {
+          txtNovaPontuacao.destroy();
+        },
+        onCompleteScope: this
+      })
+
+      // console.log("Matou O inimigo");
     } else{
-      console.log("Morreu")
+      console.log("Morreu");
     }
   }
 
@@ -183,7 +230,7 @@ export default class BootScene extends Phaser.Scene{
 
       let sorteio = Math.round(Math.random() * 100)
 
-      if(sorteio <= 90){
+      if(sorteio <= 95){
         let moeda = this.add.sprite(bloco.x, bloco.y - bloco.body.height, "coin");
         let animMoeda = this.tweens.add({
           targets: moeda,
@@ -205,8 +252,20 @@ export default class BootScene extends Phaser.Scene{
         let cogumeloMagico = this.physics.add.sprite(bloco.x, bloco.y - bloco.body.height, "magicMushroom");
         cogumeloMagico.setVelocityY(-200);
         cogumeloMagico.setGravity(0, 1000);
+        cogumeloMagico.nome = "Cogumelo";
         this.itemsColetaveis.add(cogumeloMagico);
       }
+    }
+  }
+
+  coletarItem(jogador, item){
+    if(item.nome === "Cogumelo"){
+      this.itemsColetaveis.remove(item, true, true);
+      this.powerUpSFX.play();
+      if (this.jogador.state.tamanho === "Pequeno"){
+        this.jogador.setVelocityY(-160);
+      }
+      this.jogador.state.tamanho = "Grande";
     }
   }
 }
