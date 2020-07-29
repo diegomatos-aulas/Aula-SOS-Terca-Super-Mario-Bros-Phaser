@@ -41,7 +41,7 @@ export default class BootScene extends Phaser.Scene{
     this.backgroundMusica.play();
 
     // Jogador
-    this.jogador = new Jogador(this, 46, this.GAME_HEIGHT-40, "Mario Pequeno", "Mario", "Pequeno", "Idle");
+    this.jogador = new Jogador(this, 1300, this.GAME_HEIGHT-40, "Mario Pequeno", "Mario", "Pequeno", "Idle");
 
     this.cursor = this.input.keyboard.createCursorKeys()
 
@@ -150,7 +150,7 @@ export default class BootScene extends Phaser.Scene{
 
     // Fisicas
     this.physics.add.collider(this.jogador, this.world);
-    this.physics.add.overlap(this.jogador, this.inimigos, this.colisaoComOInimigo, null, this);
+    this.physics.add.collider(this.jogador, this.inimigos, this.colisaoComOInimigo, null, this);
     this.physics.add.collider(this.jogador, this.blocosInterativos, this.colisaoComBlocosInterativos, null, this);
     this.physics.add.collider(this.jogador, this.tijolos);
     this.physics.add.overlap(this.jogador, this.itemsColetaveis, this.coletarItem, null, this);
@@ -164,9 +164,9 @@ export default class BootScene extends Phaser.Scene{
     this.physics.add.collider(this.itemsColetaveis, this.tijolos);
   }
 
-  update(){
+  update(tempoPercorrido, deltaTime){
     // Atualização do Jogador
-    this.jogador.update(this.cursor);
+    this.jogador.update(this.cursor, deltaTime);
 
     // Atualização dos Inimigos
     this.inimigos.children.each(inimigo =>{
@@ -175,7 +175,7 @@ export default class BootScene extends Phaser.Scene{
   }
 
   colisaoComOInimigo(jogador, inimigo){
-    console.log(inimigo.body.halfHeight)
+    console.log(inimigo.y - inimigo.body.halfHeight)
     if(jogador.y + jogador.body.halfHeight <= inimigo.y - inimigo.body.halfHeight){
       let novaPontuacao;
       jogador.setVelocityY(-130);

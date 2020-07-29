@@ -7,11 +7,19 @@ export default class Jogador extends Phaser.Physics.Arcade.Sprite{
 
     this.setGravity(0, 1000);
     this.setCollideWorldBounds(true);
+    this.body.setMaxVelocity(100, 420)
 
     this.canJump = true;
+    this.hasJumped = false;
+    this.jumpTime = 0;
+    this.tempoNoAr = 280; // Em ms
     this.velocidade = {
       x: 100,
-      y: 400
+      y: 420
+    }
+
+    this.aceleracao = {
+      y: 210
     }
 
     this.state = {
@@ -21,12 +29,12 @@ export default class Jogador extends Phaser.Physics.Arcade.Sprite{
     }
   }
 
-  update(cursor){
-    this.movimentacaoDoJogador(cursor);
+  update(cursor, deltaTime){
+    this.movimentacaoDoJogador(cursor, deltaTime);
     this.animacaoDoJogador();
   }
 
-  movimentacaoDoJogador(cursor){
+  movimentacaoDoJogador(cursor, deltaTime){
     this.setVelocityX(0);
 
     if(this.body.velocity.x === 0 && this.body.velocity.y === 0 && (this.body.onFloor() || this.body.touching.down)){
@@ -48,14 +56,25 @@ export default class Jogador extends Phaser.Physics.Arcade.Sprite{
       }
     }
 
-    if(cursor.up.isDown && this.canJump && (this.body.onFloor() || this.body.touching.down)){
-      this.setVelocityY(-this.velocidade.y);
-      this.state.stance = "Jump";
-      this.canJump = false;
+    if(cursor.up.isDown){
+      // É responsável por verificar se o jogador PODE pular
+      if(this.canJump && (this.body.onFloor() || this.body.touching.down)){
+        this.jumpTime = 0; // Resetar o "cronometro"
+        this.state.stance = "Jump"; // Estado do jogador, relacionado com a animação
+        this.hasJumped = true; // Se o jogador pulou
+        this.canJump = false; // Não pode mais pular
+      }
+
+      if (this.hasJumped){
+        this.jumpTime += deltaTime;
+        if (this.jumpTime > this.tempoNoAr) return
+        this.setVelocityY(-this.aceleracao.y);
+      }
     }
 
     if(cursor.up.isUp){
       this.canJump = true;
+      this.hasJumped = false;
     }
   }
 
