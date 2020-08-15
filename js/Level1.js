@@ -1,7 +1,7 @@
 import Jogador from "./GameObjects/Jogador.js"
 import Inimigo from "./GameObjects/Inimigo.js"
 
-export default class BootScene extends Phaser.Scene{
+export default class Level1 extends Phaser.Scene{
   constructor(){
     super("Level1")
   }
@@ -56,17 +56,21 @@ export default class BootScene extends Phaser.Scene{
 
         let littleGomba = new Inimigo(this, x, y, "LittleGomba");
         littleGomba.nome = "Little Gomba";
+        littleGomba.anims.play("Little Gomba Walking", true);
         this.inimigos.add(littleGomba);
 
         this.world.removeTileAt(tile.x, tile.y);
       }
 
+      // Koopa Troopa
       if(tile.index == 65){
         const x = tile.getCenterX();
         const y = tile.getCenterY();
 
         let koopaTroopa = new Inimigo(this, x, y, "KoopaTroopa");
         koopaTroopa.nome = "Koopa Troopa";
+        koopaTroopa.anims.play("Koopa Troopa Walking", true);
+        koopaTroopa.foiAtingido = false;
         this.inimigos.add(koopaTroopa);
 
         this.world.removeTileAt(tile.x, tile.y);
@@ -175,19 +179,32 @@ export default class BootScene extends Phaser.Scene{
   }
 
   colisaoComOInimigo(jogador, inimigo){
-    console.log(inimigo.y - inimigo.body.halfHeight)
     if(jogador.y + jogador.body.halfHeight <= inimigo.y - inimigo.body.halfHeight){
       let novaPontuacao;
-      jogador.setVelocityY(-130);
+      jogador.setVelocityY(-300);
       jogador.state.stance = "Jump";
-      this.inimigos.remove(inimigo, true, true);
       this.bumpSFX.play();
 
       if(inimigo.nome === "Little Gomba"){
         novaPontuacao = 200;
+        this.inimigos.remove(inimigo, true, true);
       } else if (inimigo.nome === "Koopa Troopa"){
-        novaPontuacao = 400;
+        if(!inimigo.foiAtingido) {
+          novaPontuacao = 400;
+          inimigo.foiAtingido = true;
+          inimigo.canWalk = false;
+          inimigo.anims.play("Koopa Troopa Defend");
+        }
+        else if(inimigo.foiAtingido){
+          if(inimigo.canWalk){
+            inimigo.canWalk = false;
+          } else{
+            inimigo.velocidade.x = 400;
+            inimigo.canWalk = true;
+          }
+        }
       }
+      if(!novaPontuacao) return
 
       this.pontuacao += novaPontuacao;
       this.txtPontuacao.setText(`${this.pontuacao}`);
@@ -207,14 +224,24 @@ export default class BootScene extends Phaser.Scene{
         },
         onCompleteScope: this
       })
+    } else if (inimigo.nome === "Koopa Troopa" && inimigo.foiAtingido && !inimigo.canWalk){
+      inimigo.velocidade.x = 30;
+      inimigo.canWalk = true;
+      // Operadores ternários
+      inimigo.x > jogador.x ? inimigo.direcao = 1 : inimigo.direcao = -1;
 
-      // console.log("Matou O inimigo");
+      /*if(inimigo.x > jogador.x){
+        inimigo.direcao = 1;
+      } else {
+        inimigo.direcao = -1;
+      }*/
     } else{
       console.log("Morreu");
     }
   }
 
   colisaoComBlocosInterativos(jogador, bloco){
+    // Colidiu em cima do inimigo, matar o inimigo "comum"
     if(jogador.y - jogador.body.halfHeight >= bloco.y + bloco.body.halfHeight){
       if (!bloco.canDrop) return
       bloco.canDrop = false;
