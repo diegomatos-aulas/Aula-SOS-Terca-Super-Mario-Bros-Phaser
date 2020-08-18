@@ -38,10 +38,15 @@ export default class Level1 extends Phaser.Scene{
       volume: 0.1,
       loop: true
     })
+
+    this.breakBlockSFX = this.sound.add("breakBlockSFX", {
+      volume: 0.5
+    })
+
     this.backgroundMusica.play();
 
     // Jogador
-    this.jogador = new Jogador(this, 1300, this.GAME_HEIGHT-40, "Mario Pequeno", "Mario", "Pequeno", "Idle");
+    this.jogador = new Jogador(this, 100, this.GAME_HEIGHT-40, "Mario Pequeno", "Mario", "Grande", "Idle");
 
     this.cursor = this.input.keyboard.createCursorKeys()
 
@@ -154,9 +159,9 @@ export default class Level1 extends Phaser.Scene{
 
     // Fisicas
     this.physics.add.collider(this.jogador, this.world);
-    this.physics.add.collider(this.jogador, this.inimigos, this.colisaoComOInimigo, null, this);
+    this.physics.add.overlap(this.jogador, this.inimigos, this.colisaoComOInimigo, null, this);
     this.physics.add.collider(this.jogador, this.blocosInterativos, this.colisaoComBlocosInterativos, null, this);
-    this.physics.add.collider(this.jogador, this.tijolos);
+    this.physics.add.collider(this.jogador, this.tijolos, this.colisaoComOsTijolos, null, this);
     this.physics.add.overlap(this.jogador, this.itemsColetaveis, this.coletarItem, null, this);
 
     this.physics.add.collider(this.inimigos, this.world);
@@ -200,6 +205,7 @@ export default class Level1 extends Phaser.Scene{
             inimigo.canWalk = false;
           } else{
             inimigo.velocidade.x = 400;
+            inimigo.direcao = Phaser.Math.Between(-1, 1)
             inimigo.canWalk = true;
           }
         }
@@ -225,7 +231,7 @@ export default class Level1 extends Phaser.Scene{
         onCompleteScope: this
       })
     } else if (inimigo.nome === "Koopa Troopa" && inimigo.foiAtingido && !inimigo.canWalk){
-      inimigo.velocidade.x = 30;
+      inimigo.velocidade.x = 400;
       inimigo.canWalk = true;
       // Operadores ternários
       inimigo.x > jogador.x ? inimigo.direcao = 1 : inimigo.direcao = -1;
@@ -236,7 +242,7 @@ export default class Level1 extends Phaser.Scene{
         inimigo.direcao = -1;
       }*/
     } else{
-      console.log("Morreu");
+      this.gameOver();
     }
   }
 
@@ -255,9 +261,11 @@ export default class Level1 extends Phaser.Scene{
         yoyo: true
       })
 
+      jogador.hasJumped = false;
+
       let sorteio = Math.round(Math.random() * 100)
 
-      if(sorteio <= 95){
+      if(sorteio <= 1){
         let moeda = this.add.sprite(bloco.x, bloco.y - bloco.body.height, "coin");
         let animMoeda = this.tweens.add({
           targets: moeda,
@@ -285,6 +293,38 @@ export default class Level1 extends Phaser.Scene{
     }
   }
 
+  colisaoComOsTijolos(jogador, tijolo){
+    if(jogador.y - jogador.body.halfHeight >= tijolo.y + tijolo.body.halfHeight){
+      jogador.hasJumped = false;
+      if(jogador.state.tamanho === "Pequeno"){
+        this.tweens.add({
+          targets: tijolo,
+          y: tijolo.y - tijolo.body.halfHeight,
+          ease: "Circ",
+          duration: 100,
+          repeat: 0,
+          yoyo: true
+        })
+      }
+      else if(jogador.state.tamanho === "Grande"){
+        this.breakBlockSFX.play()
+
+        let particles = this.add.particles("brickParticle")
+        particles.createEmitter({
+          speed: {min: 100, max: 130},
+          gravityY : 300,
+          quantity: 20,
+          maxParticles: 20,
+          rotate: { start: 0, end : 360},
+          x: tijolo.x,
+          y: tijolo.y
+        })
+
+        tijolo.destroy();
+      }
+    }
+  }
+
   coletarItem(jogador, item){
     if(item.nome === "Cogumelo"){
       this.itemsColetaveis.remove(item, true, true);
@@ -294,5 +334,17 @@ export default class Level1 extends Phaser.Scene{
       }
       this.jogador.state.tamanho = "Grande";
     }
+  }
+
+  randomIntFromInterval(min, max) { // min and max included 
+    return Math.floor(Math.random() * (max - min + 1) + min);
+  }
+
+  gameOver(){
+    let data = {
+      level: "Level1",
+      nome: "World 1-1"
+    }
+    this.scene.start("GameOverScene", data);
   }
 }

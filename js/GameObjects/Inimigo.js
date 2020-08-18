@@ -28,11 +28,17 @@ export default class Inimigo extends Phaser.Physics.Arcade.Sprite{
     }
   }
 
+  // Princípios SOLID
   movimentacaoDoInimigo(){
-    if(this.direcao == -1) {
+    this.verificarSeTemParedeNoCaminho();
+    if(this.direcao === -1) {
       this.setVelocityX(-this.velocidade.x)
     } else {
       this.setVelocityX(this.velocidade.x)
     }
+  }
+
+  verificarSeTemParedeNoCaminho(){
+    if(this.body.onWall()) this.direcao *= -1;
   }
 }
