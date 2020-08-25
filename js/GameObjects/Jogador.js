@@ -30,8 +30,11 @@ export default class Jogador extends Phaser.Physics.Arcade.Sprite{
   }
 
   update(cursor, deltaTime){
-    this.movimentacaoDoJogador(cursor, deltaTime);
     this.animacaoDoJogador();
+
+    if (!this.active) return
+
+    this.movimentacaoDoJogador(cursor, deltaTime);
   }
 
   movimentacaoDoJogador(cursor, deltaTime){
@@ -59,6 +62,9 @@ export default class Jogador extends Phaser.Physics.Arcade.Sprite{
     if(cursor.up.isDown){
       // É responsável por verificar se o jogador PODE pular
       if(this.canJump && (this.body.onFloor() || this.body.touching.down)){
+        if(this.state.tamanho === "Pequeno") this.scene.jumpSmallSFX.play()
+        else if(this.state.tamanho === "Grande") this.scene.jumpSuperSFX.play()
+
         this.jumpTime = 0; // Resetar o "cronometro"
         this.state.stance = "Jump"; // Estado do jogador, relacionado com a animação
         this.hasJumped = true; // Se o jogador pulou

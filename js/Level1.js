@@ -6,15 +6,19 @@ export default class Level1 extends Phaser.Scene{
     super("Level1")
   }
 
-  init(){
+  init({opcao}){
     const {width, height} = this.sys.game.canvas;
     this.GAME_WIDTH = width;
     this.GAME_HEIGHT = height;
+
+    this.jogadorEscolhido = opcao;
   }
 
   create(){
+    this.anims.resumeAll();
+
     // World Bounds
-    this.physics.world.setBounds(0, 0, 3584, 240);
+    this.physics.world.setBounds(0, 0, 3584, 272);
 
     // Tilemap
     this.map = this.add.tilemap("level1");
@@ -34,6 +38,26 @@ export default class Level1 extends Phaser.Scene{
       volume: 0.3
     })
 
+    this.jumpSmallSFX = this.sound.add("jumpSmallSFX", {
+      volume: 0.3
+    })
+
+    this.jumpSuperSFX = this.sound.add("jumpSuperSFX", {
+      volume: 0.3
+    })
+
+    this.powerupAppearsSFX = this.sound.add("powerupAppearsSFX", {
+      volume: 0.3
+    })
+
+    this.coinSFX = this.sound.add("coinSFX", {
+      volume: 0.3
+    })
+    
+    this.gameOverSFX = this.sound.add("gameOverSFX", {
+      volume: 0.3
+    })
+
     this.backgroundMusica = this.sound.add("backgroundMusic", {
       volume: 0.1,
       loop: true
@@ -46,7 +70,7 @@ export default class Level1 extends Phaser.Scene{
     this.backgroundMusica.play();
 
     // Jogador
-    this.jogador = new Jogador(this, 100, this.GAME_HEIGHT-40, "Mario Pequeno", "Mario", "Grande", "Idle");
+    this.jogador = new Jogador(this, 100, this.GAME_HEIGHT-40, "Mario Pequeno", this.jogadorEscolhido, "Pequeno", "Idle");
 
     this.cursor = this.input.keyboard.createCursorKeys()
 
@@ -157,9 +181,22 @@ export default class Level1 extends Phaser.Scene{
     this.txtTempo.setOrigin(0.5);
     this.txtTempo.setScrollFactor(0);
 
+    this.idTimer = this.time.addEvent({
+      delay: 1000,
+      callback: function (){
+        this.tempo--;
+        this.txtTempo.text = this.tempo
+        if(this.tempo === 0) {
+          this.gameOver();
+        }
+      },
+      callbackScope: this,
+      loop: true
+    })
+
     // Fisicas
     this.physics.add.collider(this.jogador, this.world);
-    this.physics.add.overlap(this.jogador, this.inimigos, this.colisaoComOInimigo, null, this);
+    this.physics.add.collider(this.jogador, this.inimigos, this.colisaoComOInimigo, null, this);
     this.physics.add.collider(this.jogador, this.blocosInterativos, this.colisaoComBlocosInterativos, null, this);
     this.physics.add.collider(this.jogador, this.tijolos, this.colisaoComOsTijolos, null, this);
     this.physics.add.overlap(this.jogador, this.itemsColetaveis, this.coletarItem, null, this);
@@ -184,6 +221,7 @@ export default class Level1 extends Phaser.Scene{
   }
 
   colisaoComOInimigo(jogador, inimigo){
+    if(this.jogador.active === false) return;
     if(jogador.y + jogador.body.halfHeight <= inimigo.y - inimigo.body.halfHeight){
       let novaPontuacao;
       jogador.setVelocityY(-300);
@@ -265,7 +303,9 @@ export default class Level1 extends Phaser.Scene{
 
       let sorteio = Math.round(Math.random() * 100)
 
-      if(sorteio <= 1){
+      if(sorteio <= 90){
+        this.coinSFX.play();
+
         let moeda = this.add.sprite(bloco.x, bloco.y - bloco.body.height, "coin");
         let animMoeda = this.tweens.add({
           targets: moeda,
@@ -284,6 +324,7 @@ export default class Level1 extends Phaser.Scene{
           moeda.destroy();
         }, this);
       } else{
+        this.powerupAppearsSFX.play()
         let cogumeloMagico = this.physics.add.sprite(bloco.x, bloco.y - bloco.body.height, "magicMushroom");
         cogumeloMagico.setVelocityY(-200);
         cogumeloMagico.setGravity(0, 1000);
@@ -341,10 +382,46 @@ export default class Level1 extends Phaser.Scene{
   }
 
   gameOver(){
+    // this.backgroundMusica.stop();
+    this.sound.pauseAll();
+    this.anims.pauseAll();
+    this.cameras.main.stopFollow();
+    this.idTimer.destroy();
+
+    this.jogador.setVelocity(0);
+
+    this.inimigos.children.iterate((inimigo, index) => {
+      inimigo.setVelocity(0, 0);
+      inimigo.disableBody(true);
+    })
+
+    this.itemsColetaveis.children.iterate((item, index) => {
+      item.setVelocity(0, 0);
+      item.disableBody(true);
+    })
+
+    this.physics.world.colliders.destroy();
+
+    this.gameOverSFX.play();
+
+    this.jogador.setActive(false);
+    this.jogador.state.stance = "Dead";
+
+
     let data = {
       level: "Level1",
       nome: "World 1-1"
     }
-    this.scene.start("GameOverScene", data);
+
+    this.tweens.add({
+      targets: this.jogador,
+      y: this.jogador.y - (this.jogador.body.halfHeight * 5),
+      ease: "Circ",
+      duration: 700
+    })
+
+    this.gameOverSFX.once("complete", (music) =>{
+      this.scene.start("GameOverScene", data);
+    })
   }
 }

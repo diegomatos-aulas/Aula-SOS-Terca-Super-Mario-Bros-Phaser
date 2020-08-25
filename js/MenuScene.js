@@ -26,9 +26,34 @@ export default class MenuScene extends Phaser.Scene{
 
     this.ponteiro = this.add.image(this.marioOpcao.x - 70, this.marioOpcao.y, "menuPonteiro").setScale(0.3)
 
+    this.jogadorAtual = "Mario";
+
+    this.input.keyboard.addKey("DOWN").on("down", () => {
+      if(this.jogadorAtual === "Mario"){
+        this.jogadorAtual = "Luigi";
+        this.ponteiro.y = this.luigiOpcao.y;
+      }
+      else if(this.jogadorAtual === "Luigi"){
+        this.jogadorAtual = "Mario";
+        this.ponteiro.y = this.marioOpcao.y;
+      }
+    });
+
+    this.input.keyboard.addKey("UP").on("down", () => {
+      if(this.jogadorAtual === "Mario"){
+        this.jogadorAtual = "Luigi";
+        this.ponteiro.y = this.luigiOpcao.y;
+      }
+      else if(this.jogadorAtual === "Luigi"){
+        this.jogadorAtual = "Mario";
+        this.ponteiro.y = this.marioOpcao.y;
+      }
+    });
+
     let enterKey = this.input.keyboard.addKey("ENTER");
     enterKey.once("down", () =>{
-        this.scene.start("Level1"); // FECHA A CENA ATUAL E INICIA A PRÓXIMO
+        let data = {opcao : this.jogadorAtual}
+        this.scene.start("Level1", data); // FECHA A CENA ATUAL E INICIA A PRÓXIMO
     })
   }
 }
