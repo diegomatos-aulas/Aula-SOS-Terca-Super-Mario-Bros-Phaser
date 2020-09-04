@@ -19,8 +19,11 @@ export default class Jogador extends Phaser.Physics.Arcade.Sprite{
     }
 
     this.aceleracao = {
+      x: 350,
       y: 210
     }
+
+    this.atrito = 200;
 
     this.state = {
       jogador,
@@ -38,27 +41,36 @@ export default class Jogador extends Phaser.Physics.Arcade.Sprite{
   }
 
   movimentacaoDoJogador(cursor, deltaTime){
-    this.setVelocityX(0);
+    // this.setVelocityX(0);
 
     if(this.body.velocity.x === 0 && this.body.velocity.y === 0 && (this.body.onFloor() || this.body.touching.down)){
       this.state.stance = "Idle"
     }
 
+    if (!cursor.right.isDown && !cursor.left.isDown){
+      this.setAccelerationX(0);
+      this.setDragX(this.atrito);
+    }
+
     if(cursor.right.isDown){
       this.flipX = false;
-      this.setVelocityX(this.velocidade.x)
-      if(this.body.onFloor() || this.body.touching.down){
+      this.setAccelerationX(this.aceleracao.x)
+
+      if (this.body.velocity.x < 0 && (this.body.onFloor() || this.body.touching.down)){
+        this.state.stance = "Changing Direction";
+      } else if(this.body.onFloor() || this.body.touching.down){
         this.state.stance = "Walking";
       }
     }
     else if(cursor.left.isDown){
       this.flipX = true;
-      this.setVelocityX(-this.velocidade.x);
-      if(this.body.onFloor() || this.body.touching.down){
+      this.setAccelerationX(-this.aceleracao.x)
+      if (this.body.velocity.x > 0 && (this.body.onFloor() || this.body.touching.down)){
+        this.state.stance = "Changing Direction";
+      } else if(this.body.onFloor() || this.body.touching.down){
         this.state.stance = "Walking";
       }
     }
-
     if(cursor.up.isDown){
       // É responsável por verificar se o jogador PODE pular
       if(this.canJump && (this.body.onFloor() || this.body.touching.down)){

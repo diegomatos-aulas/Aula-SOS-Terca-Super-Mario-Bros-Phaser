@@ -70,7 +70,7 @@ export default class Level1 extends Phaser.Scene{
     this.backgroundMusica.play();
 
     // Jogador
-    this.jogador = new Jogador(this, 100, this.GAME_HEIGHT-40, "Mario Pequeno", this.jogadorEscolhido, "Pequeno", "Idle");
+    this.jogador = new Jogador(this, 1500, this.GAME_HEIGHT-40, "Mario Pequeno", this.jogadorEscolhido, "Pequeno", "Idle");
 
     this.cursor = this.input.keyboard.createCursorKeys()
 
@@ -221,7 +221,7 @@ export default class Level1 extends Phaser.Scene{
   }
 
   colisaoComOInimigo(jogador, inimigo){
-    if(this.jogador.active === false) return;
+    if(jogador.active === false) return;
     if(jogador.y + jogador.body.halfHeight <= inimigo.y - inimigo.body.halfHeight){
       let novaPontuacao;
       jogador.setVelocityY(-300);
@@ -243,7 +243,9 @@ export default class Level1 extends Phaser.Scene{
             inimigo.canWalk = false;
           } else{
             inimigo.velocidade.x = 400;
-            inimigo.direcao = Phaser.Math.Between(-1, 1)
+            let direcao = this.randomIntFromInterval(-1, 1);
+            console.log(direcao)
+            inimigo.direcao = direcao;
             inimigo.canWalk = true;
           }
         }
@@ -273,13 +275,20 @@ export default class Level1 extends Phaser.Scene{
       inimigo.canWalk = true;
       // Operadores ternários
       inimigo.x > jogador.x ? inimigo.direcao = 1 : inimigo.direcao = -1;
+    } else if (jogador.state.tamanho === "Grande"){
+      if(jogador.x > inimigo.x) {
+        this.jogador.body.setVelocity(400, -100);
+      } else if(jogador.x < inimigo.x) {
+        this.jogador.body.setVelocity(-400, -100);
+      }
+      jogador.state.tamanho = "Pequeno";
 
-      /*if(inimigo.x > jogador.x){
-        inimigo.direcao = 1;
-      } else {
-        inimigo.direcao = -1;
-      }*/
-    } else{
+      if (inimigo.name === "Koopa Troopa"){
+        inimigo.canWalk = false;
+        inimigo.setVelocity(0)
+      }
+    }
+    else{
       this.gameOver();
     }
   }
@@ -303,7 +312,7 @@ export default class Level1 extends Phaser.Scene{
 
       let sorteio = Math.round(Math.random() * 100)
 
-      if(sorteio <= 90){
+      if(sorteio <= 1){
         this.coinSFX.play();
 
         let moeda = this.add.sprite(bloco.x, bloco.y - bloco.body.height, "coin");
@@ -336,7 +345,9 @@ export default class Level1 extends Phaser.Scene{
 
   colisaoComOsTijolos(jogador, tijolo){
     if(jogador.y - jogador.body.halfHeight >= tijolo.y + tijolo.body.halfHeight){
+     console.log("foi")
       jogador.hasJumped = false;
+
       if(jogador.state.tamanho === "Pequeno"){
         this.tweens.add({
           targets: tijolo,
