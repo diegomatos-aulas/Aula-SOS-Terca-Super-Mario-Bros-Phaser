@@ -31,7 +31,7 @@ export default class Inimigo extends Phaser.Physics.Arcade.Sprite{
   // Princípios SOLID
   movimentacaoDoInimigo(){
     this.verificarSeTemParedeNoCaminho();
-    if (this.nome === "Koopa Troopa") console.log(this.direcao)
+    // if (this.nome === "Koopa Troopa") console.log(this.direcao)
     if(this.direcao === -1) {
       this.setVelocityX(-this.velocidade.x)
     } else {

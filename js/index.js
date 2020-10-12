@@ -1,9 +1,8 @@
-import BootScene from "./Boot.js"
-import LoadScene from "./LoadScene.js"
-import MenuScene from "./MenuScene.js"
-import GameOverScene from "./GameOverScene.js"
-import Level1 from "./Level1.js"
-// import GameOverScene from "./GameOverScene.js"
+import BootScene from "./Scenes/Boot.js"
+import LoadScene from "./Scenes/LoadScene.js"
+import MenuScene from "./Scenes/MenuScene.js"
+import GameOverScene from "./Scenes/GameOverScene.js"
+import Level1 from "./Scenes/Level1.js"
 
 const config = {
   width: 240,
